@@ -13,7 +13,7 @@
       />
     </div>
     <div>
-      ←WebGL Canvas | ↓DOM
+      âWebGL Canvas | âDOM
       <InputField
         :addLogo="addLogo"
         :addHamburger="addHamburger"

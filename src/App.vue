@@ -1,6 +1,9 @@
 <template>
   <div id="app">
-    <Editor/>
+    show: <input type="checkbox" v-model="show"/>
+    <template v-if="show">
+      <Editor/>
+    </template>
   </div>
 </template>
 
@@ -9,6 +12,11 @@ import Editor from './components/Editor'
 
 export default {
   name: 'app',
+  data() {
+    return {
+      show: true,
+    };
+  },
   components: {
     Editor,
   }

@@ -4,44 +4,47 @@
     :height="height"
     @click="rayPick"
   >
-    <template v-for="object in objects">
-      <template v-if="object.type==='logo'">
-        <Logo3D
-          :key="object.id"
-          :id="object.id"
-          :material="object.material"
-          :positionX="object.positionX"
-          :positionY="object.positionY"
-          :positionZ="object.positionZ"
-          :selected="object.selected"
-          :scene="scene"
-          :camera="camera"
-          :draggableArea="renderer.domElement"
+    {{ /* props にmouted後に得られる情報があるので、 renderReady でそれを監視 */ }}
+    <template v-if="renderReady">
+      <template v-for="object in objects">
+        <template v-if="object.type==='logo'">
+          <Logo3D
+            :key="object.id"
+            :id="object.id"
+            :material="object.material"
+            :positionX="object.positionX"
+            :positionY="object.positionY"
+            :positionZ="object.positionZ"
+            :selected="object.selected"
+            :scene="scene"
+            :camera="camera"
+            :draggableArea="renderer.domElement"
 
-          @changed="glRender"
-          @input="onTargetChange"
-          @startDragging="disableCameraControls"
-          @endDragging="enableCameraControls"
-        />
-      </template>
-      <template v-if="object.type==='hamburger'">
-        <Hamburger3D
-          :key="object.id"
-          :id="object.id"
-          :material="object.material"
-          :positionX="object.positionX"
-          :positionY="object.positionY"
-          :positionZ="object.positionZ"
-          :selected="object.selected"
-          :scene="scene"
-          :camera="camera"
-          :draggableArea="renderer.domElement"
+            @changed="glRender"
+            @input="onTargetChange"
+            @startDragging="disableCameraControls"
+            @endDragging="enableCameraControls"
+          />
+        </template>
+        <template v-if="object.type==='hamburger'">
+          <Hamburger3D
+            :key="object.id"
+            :id="object.id"
+            :material="object.material"
+            :positionX="object.positionX"
+            :positionY="object.positionY"
+            :positionZ="object.positionZ"
+            :selected="object.selected"
+            :scene="scene"
+            :camera="camera"
+            :draggableArea="renderer.domElement"
 
-          @changed="glRender"
-          @input="onTargetChange"
-          @startDragging="disableCameraControls"
-          @endDragging="enableCameraControls"
-        />
+            @changed="glRender"
+            @input="onTargetChange"
+            @startDragging="disableCameraControls"
+            @endDragging="enableCameraControls"
+          />
+        </template>
       </template>
     </template>
   </canvas>
@@ -59,6 +62,7 @@ export default {
   name: 'Viewer',
   data() {
     return {
+      renderReady: false,
     };
   },
   props: {
@@ -105,6 +109,8 @@ export default {
 
     this.gridHelper = new THREE.GridHelper( 10, 10 );
     this.scene.add( this.gridHelper );
+
+    this.renderReady = true;
 
     // 横と縦が同時に変化したことを検知しても、1箇所の変化として受け取る
     // 個別にwatchすると、watchが2回走ってしまう
@@ -278,6 +284,10 @@ export default {
       this.willRender = true;
 
       requestAnimationFrame( () => {
+
+        // destry された直前に描画予約されていたら、それは無視する
+        if ( ! this.renderer ) return;
+  
         this.renderer.render( this.scene, this.camera );
         delete this.willRender; // レンダリングが完了したら予約解除
       } );
@@ -286,14 +296,16 @@ export default {
 
   },
 
-  beforeDestory() {
-
+  destroyed() {
+    
     this.renderer.dispose();
     this.renderer.forceContextLoss();
-    this.renderer.context = undefined;
     this.renderer.domElement.width = 1;
     this.renderer.domElement.height = 1;
+    
+    this.renderer.context = undefined;
     this.renderer.domElement = undefined;
+    this.renderer = undefined;
     this.cameraControls.dispose();
 
   },
