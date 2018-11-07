@@ -12,8 +12,8 @@
         @input="changeTargetTransform"
       />
     </div>
-    <div>
-      âWebGL Canvas | âDOM
+    <div class="Editor_Input">
+      ← WebGL Canvas | ↓DOM
       <InputField
         :addLogo="addLogo"
         :addHamburger="addHamburger"
@@ -31,6 +31,7 @@
 import { mapState, mapGetters, mapActions } from 'vuex';
 import { find, throttle } from 'lodash-es';
 import Viewer from './Viewer';
+// import Viewer from './Viewer2';
 import InputField from './InputField';
 
 export default {
@@ -78,11 +79,14 @@ export default {
 </script>
 
 <style scoped lang="scss">
-.Editor{
+.Editor {
   display: flex;
 }
-.Editor_Viewer{
-  width: 50%;
+.Editor_Viewer {
+  flex-grow: 1;
   height: 100vh;
+}
+.Editor_Input {
+  width: 300px;
 }
 </style>

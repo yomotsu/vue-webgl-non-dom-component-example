@@ -1,10 +1,10 @@
-// <template> や <script> を持たない「コンポーネント」
-import Vue from 'vue';
+<script>
+// <template> や <style> を持たない「コンポーネント」
 import * as THREE from 'three'
 import { deepDispose } from '../utils/deep-dispose';
 
-export default Vue.extend( {
-  name: 'Logo3D',
+export default {
+  name: 'Hamburger3D',
   props: {
     id: Number,
     positionX: Number,
@@ -27,9 +27,10 @@ export default Vue.extend( {
       }
     }
   },
-  mounted() {
-    
-    console.log( 'Logo3D is mounted!' );
+  created() {
+
+    // eslint-disable-next-line
+    console.log( 'Hamburger3D is mounted!' );
 
     var loader = new THREE.GLTFLoader();
 
@@ -40,7 +41,7 @@ export default Vue.extend( {
     this.transformControl.addEventListener( 'dragging-changed', this.onControlDraggingChanged );
 
     loader.load(
-      './vue.glb',
+      './barger.glb',
       ( gltf ) => {
 
         this.mesh = gltf.scene;
@@ -53,7 +54,8 @@ export default Vue.extend( {
     
       },
       ( xhr ) => {
-    
+        
+        // eslint-disable-next-line
         console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
     
       },
@@ -117,20 +119,25 @@ export default Vue.extend( {
 
   },
 
-  beforeDestroy() {
+  destroyed() {
 
     this.transformControl.detach();
     this.transformControl.dispose();
     deepDispose( this.mesh );
     this.scene.remove( this.mesh );
-    console.log( 'diposed' );
     this.$emit( 'changed' );
+
+    // eslint-disable-next-line
+    console.log( 'diposed' );
 
   },
 
 	render() {
     // template がないので、空の render を明示して
     // `Failed to mount component: template or render function not defined.` 
-    // のエラーを防ぐ
+    // を防ぐ
+
+    return null;
 	}
-} );
+};
+</script>

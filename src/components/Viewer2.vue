@@ -4,51 +4,7 @@
     :height="height"
     @click="rayPick"
   >
-    {{ /* props にmouted後に得られる情報があるので、 renderReady でそれを監視 */ }}
-    <template v-if="renderReady">
-      <template v-for="object in objects">
-        <template v-if="object.type==='logo'">
-          {{ /* 必ず一意のkeyを入れる */ }}
-          <Logo3D
-            :key="object.id"
-            :id="object.id"
-            :material="object.material"
-            :positionX="object.positionX"
-            :positionY="object.positionY"
-            :positionZ="object.positionZ"
-            :selected="object.selected"
-            :scene="scene"
-            :camera="camera"
-            :draggableArea="renderer.domElement"
-
-            @changed="glRender"
-            @input="onTargetChange"
-            @startDragging="disableCameraControls"
-            @endDragging="enableCameraControls"
-          />
-        </template>
-        <template v-if="object.type==='hamburger'">
-          {{ /* 必ず一意のkeyを入れる */ }}
-          <Hamburger3D
-            :key="object.id"
-            :id="object.id"
-            :material="object.material"
-            :positionX="object.positionX"
-            :positionY="object.positionY"
-            :positionZ="object.positionZ"
-            :selected="object.selected"
-            :scene="scene"
-            :camera="camera"
-            :draggableArea="renderer.domElement"
-
-            @changed="glRender"
-            @input="onTargetChange"
-            @startDragging="disableCameraControls"
-            @endDragging="enableCameraControls"
-          />
-        </template>
-      </template>
-    </template>
+  <X/>
   </canvas>
 </template>
 
@@ -56,6 +12,7 @@
 import * as THREE from 'three';
 import { find, differenceWith } from 'lodash-es';
 import Logo3D from './Logo3D';
+import X from './X';
 import Hamburger3D from './Hamburger3D';
 
 const _v2 = new THREE.Vector2();
@@ -125,9 +82,113 @@ export default {
 
     } );
 
+    this.$watch( 'objects', ( newObjects, oldObjects ) => {
+
+      // ストアにあるのに、シーンになかったら追加
+      const addDiff = ! oldObjects ?
+        newObjects : 
+        differenceWith( newObjects, oldObjects, ( newO, oldO ) => newO.id === oldO.id );
+      addDiff.forEach( ( addedObject ) => this.addChild( addedObject ) );
+
+      // ストアにないのに、シーンにあったら削除
+      const removeDiff = ! oldObjects ?
+        [] : 
+        differenceWith( oldObjects, newObjects, ( oldO, newO ) => oldO.id === newO.id );
+
+      removeDiff.forEach( ( removedObject ) => this.removeChild( removedObject ) );
+
+      // props を流し込む（手動で同期）
+      newObjects.forEach( ( objects ) => {
+
+        const vm = find( this.$children, ( child ) => child.id === objects.id );
+        vm.$props.material  = objects.material;
+        vm.$props.positionX = objects.positionX;
+        vm.$props.positionY = objects.positionY;
+        vm.$props.positionZ = objects.positionZ;
+        vm.$props.selected  = objects.selected;
+
+      } );
+
+    }, {
+      immediate: true
+    } );
+
   },
 
   methods: {
+
+    addChild( object ) {
+
+      const DisplayObject3d = object.type === 'hamburger' ? Hamburger3D : Logo3D;
+
+      // 手動でマウントする
+      const Displayobject3D = new DisplayObject3d( {
+        // store: this.$store,
+        // 一応、dataも渡せるけれど...
+        // data: {
+        //   data0: true
+        // },
+        // propsは`propsData`として渡す
+        // https://github.com/vuejs/vue/blob/b8d33ecd9ab8b7a46d8558b4e2caf506235cd165/src/core/instance/init.js#L84
+        propsData: {
+          id: object.id,
+          positionX: object.positionX,
+          positionY: object.positionY,
+          positionZ: object.positionZ,
+          material: object.material,
+          selected: false,
+
+          scene: this.scene,
+          camera: this.camera,
+          draggableArea: this.renderer.domElement,
+        }
+      } );
+
+      // イベントのバインド。template で書くなら @change="glRender"
+      Displayobject3D.$on( 'changed', () => {
+        this.glRender();
+      } );
+
+      Displayobject3D.$on( 'input', ( { id, x, y, z} ) => {
+
+        this.$emit( 'input', { id, x, y, z } );
+
+      } );
+
+      Displayobject3D.$on( 'startDragging', () => {
+
+        this.cameraControls.enabled = false;
+
+      } );
+
+      Displayobject3D.$on( 'endDragging', () => {
+
+        this.cameraControls.enabled = true;
+
+      } );
+
+      Displayobject3D.$on( 'delete', () => {
+
+        Displayobject3D.$destroy();
+
+      } );
+
+      // VueDevTools にも反映される
+      this.$children.push( Displayobject3D );
+      // インスタンス内で mounted が発火する
+      Displayobject3D.$mount();
+
+    },
+
+    removeChild( object ) {
+
+      // シーンからの削除処理
+      const index = this.$children.findIndex( ( child ) => child.id === object.id );
+      const Displayobject3D = this.$children[ index ];
+      this.$children.splice( index, 1 );
+      Displayobject3D.$destroy();
+
+    },
 
     rayPick( event ) {
 
@@ -139,7 +200,7 @@ export default {
       );
 
       this.raycaster.setFromCamera( cursorPosition, this.camera );
-      // Meshのみを集める。（SceneやObject3Dは、rayを弾くため）
+      // Meshのみを集める。（SceneやDisplayObject3Dは、rayを弾くため）
       const intersectTargets = this.scene.children.reduce( ( accumulator, obj ) => {
 
         if ( ! obj.userData.vuexId ) return accumulator;
@@ -220,6 +281,7 @@ export default {
   components: {
     Logo3D,
     Hamburger3D,
+    X,
   }
 }
 </script>
