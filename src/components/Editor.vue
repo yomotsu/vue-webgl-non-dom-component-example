@@ -31,7 +31,7 @@
 import { mapState, mapGetters, mapActions } from 'vuex';
 import { find, throttle } from 'lodash-es';
 import Viewer from './Viewer';
-// import Viewer from './Viewer2';
+// import Viewer from './Viewer2'; //手動マウントの例
 import InputField from './InputField';
 
 export default {

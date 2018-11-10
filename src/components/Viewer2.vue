@@ -4,16 +4,14 @@
     :height="height"
     @click="rayPick"
   >
-  <X/>
   </canvas>
 </template>
 
 <script>
 import * as THREE from 'three';
 import { find, differenceWith } from 'lodash-es';
-import Logo3D from './Logo3D';
-import X from './X';
-import Hamburger3D from './Hamburger3D';
+import Logo3D from './js_Logo3D';
+import Hamburger3D from './js_Hamburger3D';
 
 const _v2 = new THREE.Vector2();
 
@@ -277,12 +275,6 @@ export default {
     this.cameraControls.dispose();
 
   },
-
-  components: {
-    Logo3D,
-    Hamburger3D,
-    X,
-  }
 }
 </script>
 
